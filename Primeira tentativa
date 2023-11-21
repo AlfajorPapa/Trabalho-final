@@ -1,0 +1,62 @@
+import bpy
+import math
+
+def limpar_cena():
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_by_type(type='MESH')
+    bpy.ops.object.delete()
+
+def adicionar_objeto_primitivo(nome, tipo, location):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=1.0, location=location)
+    obj = bpy.context.active_object
+    obj.name = nome
+
+    bpy.ops.rigidbody.object_add(type=tipo)
+    return obj
+
+def adicionar_chao(location, rotacao):
+    bpy.ops.mesh.primitive_plane_add(size=10, location=location)
+    chao = bpy.context.active_object
+    chao.name = "Chao"
+    chao.rotation_euler = rotacao
+
+    bpy.ops.rigidbody.object_add(type='PASSIVE')
+    return chao
+
+def configurar_fisica(objeto, tipo, massa, friccao, restituicao):
+    objeto.rigid_body.type = tipo
+    objeto.rigid_body.mass = massa
+    objeto.rigid_body.friction = friccao
+    objeto.rigid_body.restitution = restituicao
+
+# Limpar a cena
+limpar_cena()
+
+# Permite que o usuário escolha o objeto
+escolha_objeto = input("Digite 'esfera' ou 'quadrado' para escolher o objeto: ")
+
+# Adicionar objeto selecionado
+if escolha_objeto.lower() == 'esfera':
+    objeto_ativo = adicionar_objeto_primitivo("Esfera", 'ACTIVE', (0, 0, 5))
+elif escolha_objeto.lower() == 'quadrado':
+    objeto_ativo = adicionar_objeto_primitivo("Quadrado", 'ACTIVE', (0, 0, 5))
+else:
+    print("Escolha inválida. Por favor, digite 'esfera' ou 'quadrado'.")
+    bpy.ops.wm.quit_blender()
+
+# Adicionar chão
+chao = adicionar_chao((0, 0, 0), (math.radians(30), 0, 0))
+
+# Configurar física para os objetos
+configurar_fisica(objeto_ativo, 'ACTIVE', 1.0, 0.0, 1.0)
+configurar_fisica(chao, 'PASSIVE', 0.0, 0.0, 0.0)
+
+# Configurar gravidade
+bpy.context.scene.rigidbody_world.point_gravity.gravity = (0, 0, -9.8)
+
+# Configurar animação
+bpy.context.scene.frame_start = 1
+bpy.context.scene.frame_end = 50
+
+# Reproduzir a animação
+bpy.ops.screen.animation_play()
